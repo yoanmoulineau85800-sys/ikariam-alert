@@ -1,10 +1,9 @@
-import os
 import requests
 from bs4 import BeautifulSoup
 
-# === Configuration ===
-ISLAND_URL = "https://s61-fr.ikariam.gameforge.com/?view=island&islandId=4407"
-WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")  # stocké dans Render pour sécurité
+# Configuration
+ISLAND_URL = "https://s61-fr.ikariam.gameforge.com/?view=island&id=4407"
+WEBHOOK_URL = "https://discord.com/api/webhooks/1413129396444725340/WJ0NiorckGfmFE5OT1f7Z6q38HDS8q0WqV4wgcumHcaB2npkSqN5LoroeQLe21BjaqP"
 
 def send_discord_alert(message: str):
     """Envoie une alerte sur Discord"""
@@ -25,13 +24,12 @@ def check_slots():
         response.raise_for_status()
         soup = BeautifulSoup(response.text, "html.parser")
 
-        towns = soup.select(".cityLocationForms")
-        free_slots = sum("buildPlace" in t.get("class", []) for t in towns)
+        # Recherche des emplacements
+        slots = soup.select("a.link_img.island_feature_img")
+        free_slots = [s for s in slots if "Voulez-vous bâtir une colonie ici" in s.get("title", "")]
 
-        if free_slots > 0:
-            send_discord_alert(
-                f"🎉 Une place s'est libérée ! ({free_slots} slot(s) dispo)\n{ISLAND_URL}"
-            )
+        if free_slots:
+            send_discord_alert(f"🎉 Une place libre trouvée ! ({len(free_slots)} dispo) 👉 {ISLAND_URL}")
         else:
             print("⏳ Pas de place libre pour le moment.")
     except Exception as e:
