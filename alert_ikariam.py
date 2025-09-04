@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import time
 
 # Configuration
 ISLAND_URL = "https://s61-fr.ikariam.gameforge.com/?view=island&id=4407"
@@ -24,16 +25,20 @@ def check_slots():
         response.raise_for_status()
         soup = BeautifulSoup(response.text, "html.parser")
 
-        # Recherche des emplacements
+        # On prend tous les liens des emplacements de ville
         slots = soup.select("a.link_img.island_feature_img")
+
+        # On filtre ceux dont le title correspond à un emplacement libre
         free_slots = [s for s in slots if "Voulez-vous bâtir une colonie ici" in s.get("title", "")]
 
         if free_slots:
-            send_discord_alert(f"🎉 Une place libre trouvée ! ({len(free_slots)} dispo) 👉 {ISLAND_URL}")
+            send_discord_alert(f"🎉 Une place LIBRE trouvée ! ({len(free_slots)} dispo) 👉 {ISLAND_URL}")
         else:
             print("⏳ Pas de place libre pour le moment.")
     except Exception as e:
         print(f"❌ Erreur lors du check: {e}")
 
 if __name__ == "__main__":
-    check_slots()
+    while True:
+        check_slots()
+        time.sleep(15)  # Vérifie toutes les 15 secondes
